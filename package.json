@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "say": "^0.16.0",
+    "speakertts": "^1.0.3",
+    "tmi.js": "^1.8.5"
+  }
+}
