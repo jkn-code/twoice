@@ -2,7 +2,7 @@
  Twitch voice chat
 
 
-File cfg.txt format
+File cfg.txt format:
 _____
 channel: channel_name
 
