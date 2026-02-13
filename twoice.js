@@ -5,6 +5,7 @@ var fs = require('fs');
 let channelName
 let messages = []
 let busy = false
+const urlRegex = /(https?:\/\/[^\s]+)/g;
 
 if (fs.existsSync('cfg.txt')) {
     let lines = fs.readFileSync('cfg.txt')?.toString().split("\n");
@@ -59,7 +60,12 @@ order_message()
 function order_message() {
     if (!busy) {
         let msg = messages.pop()
-        if (msg) speak(msg)
+        if (msg) {
+            if (!urlRegex.test(msg))
+                speak(msg)
+            else
+               speak("Отправлена ссылка")
+        }
     }
 
     setTimeout(() => {
