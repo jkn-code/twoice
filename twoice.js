@@ -2,21 +2,35 @@
 const speaker = require('speakertts')
 var fs = require('fs');
 
-let channelName
+// let channelName
 let messages = []
 let busy = false
+let cfg = {}
 const urlRegex = /(https?:\/\/[^\s]+)/g;
 
 if (fs.existsSync('cfg.txt')) {
     let lines = fs.readFileSync('cfg.txt')?.toString().split("\n");
-    for (let i in lines) {
-        if (i == 0) {
-            let a = lines[i].split(':')
-            if (a.length > 1) channelName = a[1].trim()
-        }
+    for (let line of lines) if (line.trim() != "") {
+        console.log(line);
+        let prm = line.split(':')
+        if (prm[0].trim() != "" && prm.length > 1)
+            cfg[prm[0].trim()] = prm[1].trim()
     }
 
-    if (channelName) {
+    let ni = []
+    if (cfg['names ignore'])
+        for (let name of cfg['names ignore'].split(',')) {
+            name = name.trim()
+            if (name != "" && !ni.includes(name))
+                ni.push(name.trim())
+        }
+    cfg['names ignore'] = ni
+
+    if (cfg['short name']) cfg['short name'] = parseInt(cfg['short name'])
+
+    console.log("CFG: ", cfg);
+
+    if (cfg.channel) {
         speak('Говорение начато')
 
         const tmi = require('tmi.js');
@@ -25,16 +39,22 @@ if (fs.existsSync('cfg.txt')) {
                 secure: true,
                 reconnect: true
             },
-            channels: [channelName]
+            channels: [cfg.channel]
         });
 
         client.connect();
 
         client.on('message', (channel, tags, message, self) => {
             // console.log(`${tags['display-name']}: ${message}`);
+            if (!cfg['names ignore'].includes(tags['display-name'])) {
+                let name = tags['display-name']
+                if (cfg['short name'] > 0)
+                    name = name.substring(0, cfg['short name'])
 
-            if (!getIgnore().includes(tags['display-name']))
-                messages.unshift(tags['display-name'] + ' говорит ' + message)
+                if (urlRegex.test(message)) message = "вэб-ссылка"
+                
+                messages.unshift(name + ' говорит ' + message)
+            }
         });
     }
     else speak('Канал в настройках не указан')
@@ -48,24 +68,12 @@ function speak(txt) {
     speaker.speak(txt, '', 1, 'UTF-8', () => { busy = false })
 }
 
-function getIgnore() {
-    let ot = []
-    let lines = fs.readFileSync('cfg.txt')?.toString().split("\n");
-    for (let i in lines)
-        if (i > 1) ot.push(lines[i].trim())
-    return ot
-}
 
 order_message()
 function order_message() {
     if (!busy) {
         let msg = messages.pop()
-        if (msg) {
-            if (!urlRegex.test(msg))
-                speak(msg)
-            else
-               speak("Отправлена ссылка")
-        }
+        if (msg) speak(msg)
     }
 
     setTimeout(() => {

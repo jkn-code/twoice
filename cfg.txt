@@ -1,7 +1,6 @@
 channel: jkingururu
-names ignore: 
-StreamElements
-
+names ignore: StreamElements, 
+short name: 3
 
 
  
